@@ -9,5 +9,5 @@ public class Locales {
     public static final java.util.Locale FINNISH = new java.util.Locale("fi",
             "FI");
     public static final java.util.Locale ENGLISH = Locale.UK;
-    public static final java.util.Locale FRENCH = Locale.FRENCH;
+    public static final java.util.Locale FRENCH = Locale.FRANCE;
 }
