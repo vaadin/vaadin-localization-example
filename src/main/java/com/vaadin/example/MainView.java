@@ -1,11 +1,7 @@
 package com.vaadin.example;
 
-import java.util.Locale;
-
-import com.vaadin.flow.i18n.I18NProvider;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.CssImport;
@@ -13,9 +9,17 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.i18n.I18NProvider;
 import com.vaadin.flow.i18n.LocaleChangeEvent;
 import com.vaadin.flow.i18n.LocaleChangeObserver;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinService;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.servlet.http.Cookie;
+import java.util.Locale;
+
+import static com.vaadin.example.SimpleI18NProvider.ENGLISH;
 
 /**
  * A sample Vaadin view class.
@@ -50,13 +54,16 @@ public class MainView extends VerticalLayout implements LocaleChangeObserver {
     public MainView(@Autowired GreetService service,
             @Autowired I18NProvider i18NProvider) {
 
+        if (UI.getCurrent().getLocale() == null)
+            UI.getCurrent().setLocale(ENGLISH);
         // select component for selecting a language
         selectLanguage = new Select<>();
         selectLanguage.setLabel("selectLanguage");
         selectLanguage.setItems(i18NProvider.getProvidedLocales());
         selectLanguage.setItemLabelGenerator(Locale::getDisplayCountry);
+        selectLanguage.setValue(UI.getCurrent().getLocale());
         selectLanguage.addValueChangeListener(
-                event -> getUI().get().setLocale(selectLanguage.getValue()));
+                event -> changeLocale(event.getValue()));
 
         // Use TextField for standard text input
         textField = new TextField(getTranslation("yourName"));
@@ -79,6 +86,12 @@ public class MainView extends VerticalLayout implements LocaleChangeObserver {
         addClassName("centered-content");
 
         add(selectLanguage, textField, button);
+    }
+
+    private void changeLocale(Locale locale) {
+        getUI().get().setLocale(locale);
+        VaadinService.getCurrentResponse()
+                .addCookie(new Cookie("locale", locale.toLanguageTag()));
     }
 
     @Override

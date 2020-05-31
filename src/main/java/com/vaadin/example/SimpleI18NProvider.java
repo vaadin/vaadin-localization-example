@@ -3,9 +3,7 @@ package com.vaadin.example;
 import com.vaadin.flow.i18n.I18NProvider;
 import org.springframework.stereotype.Component;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,16 +11,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Properties;
+import java.util.ResourceBundle;
 
 /**
  * Simple implementation of {@link I18NProvider}.
  */
 @Component
 public class SimpleI18NProvider implements I18NProvider {
+
+    public static final java.util.Locale FINNISH = new java.util.Locale("fi",
+            "FI");
+    public static final java.util.Locale ENGLISH = Locale.UK;
+    public static final java.util.Locale FRENCH = Locale.FRANCE;
+
     private static final List<Locale> PROVIDED_LOCALES = Collections
-            .unmodifiableList(Arrays.asList(Locales.ENGLISH, Locales.FRENCH,
-                    Locales.FINNISH));
+            .unmodifiableList(Arrays.asList(ENGLISH, FRENCH,
+                    FINNISH));
     private static Map<Locale, Map<String, String>> localeMap = initMap();
     private static final String PROPERTIES_FILE = "src/main/resources/labelsbundle_{0}.properties";
 
@@ -33,18 +37,13 @@ public class SimpleI18NProvider implements I18NProvider {
             String fileName = MessageFormat.format(PROPERTIES_FILE,
                     locale.getLanguage().toLowerCase());
             localeMap.put(locale, new HashMap<>());
-            try (FileInputStream fileInputStream = new FileInputStream(
-                    fileName)) {
-                InputStreamReader inputStreamReader = new InputStreamReader(
-                        fileInputStream, "UTF-8");
-                Properties properties = new Properties();
-                properties.load(inputStreamReader);
-                for (String key : properties.stringPropertyNames()) {
-                    String value = properties.getProperty(key);
-                    localeMap.get(locale).put(key, value);
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            ResourceBundle resourceBundle = ResourceBundle
+                    .getBundle("labelsbundle", locale);
+            for (String key : resourceBundle.keySet()) {
+                String value = resourceBundle.getString(key);
+                value = new String(value.getBytes(StandardCharsets.ISO_8859_1),
+                        StandardCharsets.UTF_8);
+                localeMap.get(locale).put(key, value);
             }
         }
         return localeMap;
