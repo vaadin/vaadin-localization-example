@@ -1,9 +1,5 @@
 package com.vaadin.example;
 
-import com.vaadin.flow.i18n.I18NProvider;
-import org.springframework.stereotype.Component;
-
-import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,55 +7,70 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+
+import javax.annotation.PostConstruct;
+
+import org.springframework.stereotype.Component;
+
+import com.vaadin.flow.i18n.I18NProvider;
 
 /**
  * Simple implementation of {@link I18NProvider}.
+ * <p>
+ * Actual translations can be found in the labelsbundle_{lang_code}.properties
+ * files.
+ * <p>
+ * Singleton scope.
  */
 @Component
 public class SimpleI18NProvider implements I18NProvider {
 
-    public static final java.util.Locale FINNISH = new java.util.Locale("fi",
-            "FI");
-    public static final java.util.Locale ENGLISH = Locale.UK;
-    public static final java.util.Locale FRENCH = Locale.FRANCE;
+	/*
+	 * Use no-country versions, so that e.g. both en_US and en_GB work.
+	 */
+	public static final java.util.Locale FINNISH = new Locale("fi");
+	public static final java.util.Locale ENGLISH = new Locale("en");
+	public static final java.util.Locale FRENCH = new Locale("fr");
 
-    private static final List<Locale> PROVIDED_LOCALES = Collections
-            .unmodifiableList(Arrays.asList(ENGLISH, FRENCH,
-                    FINNISH));
-    private static Map<Locale, Map<String, String>> localeMap = initMap();
-    private static final String PROPERTIES_FILE = "src/main/resources/labelsbundle_{0}.properties";
+	private Map<String, ResourceBundle> localeMap;
 
-    private static Map<Locale, Map<String, String>> initMap() {
-        Map<Locale, Map<String, String>> localeMap = new HashMap<>();
+	@PostConstruct
+	private void initMap() {
+		localeMap = new HashMap<>();
 
-        for (Locale locale : PROVIDED_LOCALES) {
-            String fileName = MessageFormat.format(PROPERTIES_FILE,
-                    locale.getLanguage().toLowerCase());
-            localeMap.put(locale, new HashMap<>());
-            ResourceBundle resourceBundle = ResourceBundle
-                    .getBundle("labelsbundle", locale);
-            for (String key : resourceBundle.keySet()) {
-                String value = resourceBundle.getString(key);
-                value = new String(value.getBytes(StandardCharsets.ISO_8859_1),
-                        StandardCharsets.UTF_8);
-                localeMap.get(locale).put(key, value);
-            }
-        }
-        return localeMap;
-    }
+		// Read translations file for each locale
+		for (final Locale locale : getProvidedLocales()) {
 
-    @Override
-    public List<Locale> getProvidedLocales() {
-        return PROVIDED_LOCALES;
-    }
+			final ResourceBundle resourceBundle = ResourceBundle.getBundle("labelsbundle", locale);
+			localeMap.put(locale.getLanguage(), resourceBundle);
+		}
+	}
 
-    @Override
-    public String getTranslation(String key, Locale locale, Object... params) {
+	@Override
+	public List<Locale> getProvidedLocales() {
+		return Collections.unmodifiableList(Arrays.asList(ENGLISH, FRENCH, FINNISH));
+	}
 
-        if (params != null && params.length > 0)
-            return MessageFormat.format(localeMap.get(locale).get(key), params);
+	@Override
+	public String getTranslation(String key, Locale locale, Object... params) {
 
-        return localeMap.get(locale).get(key);
-    }
+		String rawstring = null;
+		try {
+			rawstring = localeMap.get(locale.getLanguage()).getString(key);
+
+			return MessageFormat.format(rawstring, params);
+
+		} catch (final MissingResourceException e) {
+			// Translation not found, return error message instead of null as per API
+			System.out.println(String.format("No translation found for key {%s}", key));
+			return String.format("!{%s}", key);
+		} catch (final IllegalArgumentException e) {
+			e.printStackTrace(); // for devs to find where this happened
+			// Incorrect parameters
+			return rawstring;
+		}
+
+	}
 }
