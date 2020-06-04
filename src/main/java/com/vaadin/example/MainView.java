@@ -55,6 +55,11 @@ public class MainView extends VerticalLayout implements LocaleChangeObserver {
 	private final Button greetingButton;
 	private final Select<Locale> languageSelect;
 
+	private final Span helpCookieNotFound = new Span();
+	private final Span helpCookieFound = new Span();
+	private final Span helpSelectLang = new Span();
+	private final String cookieLang;
+
 	public MainView(@Autowired GreetService service, @Autowired I18NProvider i18NProvider) {
 
 		/*
@@ -63,7 +68,7 @@ public class MainView extends VerticalLayout implements LocaleChangeObserver {
 		 * The list of available locales this particular app supports can be found in
 		 * SimpleI18NProvider#getAvailableLocales().
 		 *
-		 * The deafult order of locale detection is as follows:
+		 * The default order of locale detection is as follows:
 		 *
 		 * 1. If there is no I18NProvider available, use the JVM (server) locale
 		 *
@@ -73,30 +78,27 @@ public class MainView extends VerticalLayout implements LocaleChangeObserver {
 		 * 3. Use the first item from I18NProvider#getAvailableLocales().
 		 *
 		 * However, we have added our own check with the cookie, that overrides this
-		 * behaviour. See ServiceInitListener#initLanguage().
+		 * behavior. See ServiceInitListener#initLanguage().
 		 */
 
 		System.out.println("Current locale is " + UI.getCurrent().getLocale());
 
-		// Check if the user has a locale cookie. This is for information only, as the
-		// UI init code has already found the cookie if it exists, and used it.
-		final String cookieLang = findLocaleFromCookie();
+		cookieLang = findLocaleFromCookie();
 		if ("".equals(cookieLang)) {
 
-			add(new Span("No stored language preference found."));
-			add(new Span("Defaulting to browser locale (if supported) or English."));
+			add(helpCookieNotFound);
 		} else {
 
-			add(new Span("Locale was found from cookie: " + cookieLang));
+			add(helpCookieFound);
 
-			final Button clearCookieButton = new Button("[Clear language cookie and refresh page]",
+			final Button clearCookieButton = new Button(getTranslation("view.help.clearcookie"),
 					e -> clearLocalePreference());
+			clearCookieButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ERROR);
 			add(clearCookieButton);
 		}
 
 		// component for selecting another language
 		languageSelect = new Select<>();
-		languageSelect.setLabel("selectLanguage");
 		languageSelect.setItems(i18NProvider.getProvidedLocales());
 		languageSelect.setItemLabelGenerator(l -> getTranslation(l.getLanguage()));
 
@@ -104,20 +106,18 @@ public class MainView extends VerticalLayout implements LocaleChangeObserver {
 		languageSelect.addValueChangeListener(event -> saveLocalePreference(event.getValue()));
 		add(languageSelect);
 
-		add(new Span("When you select a new language, your choice will be saved and re-used if you reload the page."));
+		add(helpSelectLang);
 
 		// Examples how to use translations.
-		nameField = new TextField(getTranslation("yourName"));
+		nameField = new TextField();
 		add(nameField);
 
 		// The service can use the i18nProvider too.
-		greetingButton = new Button(getTranslation("helloButton"),
-				e -> Notification.show(service.greet(nameField.getValue(), getLocale())));
+		greetingButton = new Button();
+		greetingButton.addClickListener(e -> Notification.show(service.greet(nameField.getValue(), getLocale())));
 		greetingButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 		greetingButton.addClickShortcut(Key.ENTER);
 		add(greetingButton);
-
-		setAlignItems(Alignment.CENTER);
 	}
 
 	/**
@@ -147,14 +147,14 @@ public class MainView extends VerticalLayout implements LocaleChangeObserver {
 	private void saveLocalePreference(Locale locale) {
 		getUI().get().setLocale(locale);
 		VaadinService.getCurrentResponse().addCookie(new Cookie("locale", locale.toLanguageTag()));
-		Notification.show("Locale choice saved into cookie");
+		Notification.show(getTranslation("view.help.localesaved"));
 	}
 
 	/*
 	 * (non-javadoc, see method javadoc for more info.)
 	 *
-	 * Called whenever we call UI.setLocale(). In this listener method we should
-	 * update all of our translated information.
+	 * Called on load and whenever we call UI.setLocale(). In this listener method
+	 * we should update all of our translated information.
 	 *
 	 * An alternative to updating each text is to reload the application; we stored
 	 * the new locale in a cookie, so a reload would have the same effect. This way
@@ -164,8 +164,12 @@ public class MainView extends VerticalLayout implements LocaleChangeObserver {
 	@Override
 	public void localeChange(LocaleChangeEvent localeChangeEvent) {
 
-		greetingButton.setText(getTranslation("helloButton"));
-		nameField.setLabel(getTranslation("yourName"));
-		languageSelect.setLabel(getTranslation("selectLanguage"));
+		helpCookieNotFound.setText(getTranslation("view.help.nopreferencefound"));
+		helpCookieFound.setText(getTranslation("view.help.localefoundfromcookie", cookieLang));
+		helpSelectLang.setText(getTranslation("view.help.selectlang"));
+
+		languageSelect.setLabel(getTranslation("view.langSelect"));
+		nameField.setLabel(getTranslation("view.nameField"));
+		greetingButton.setText(getTranslation("view.helloButton"));
 	}
 }

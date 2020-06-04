@@ -21,9 +21,9 @@ public class GreetService implements Serializable {
 	public String greet(String name, Locale locale) {
 
 		if (name == null || name.isEmpty()) {
-			return i18NProvider.getTranslation("anonymousGreeting", locale);
+			return i18NProvider.getTranslation("service.anonymousGreeting", locale);
 		} else {
-			return i18NProvider.getTranslation("greeting", locale, name);
+			return i18NProvider.getTranslation("service.greeting", locale, name);
 		}
 	}
 }
