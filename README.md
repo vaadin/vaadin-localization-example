@@ -3,7 +3,7 @@
 This example application demonstrates implementing internationalization and localization in a Vaadin Spring Boot project.
 Locales supported are English, Finnish and French.
 
-[![Vaadin 14 Localization Example](localization-example.png)](https://github.com/shadikhani/vaadin-localization-example)
+[![Vaadin 14 Localization Example](localization-example.PNG)](https://github.com/shadikhani/vaadin-localization-example)
 
 Among the classes under the `com.vaadin.example` package
 - `Application.java` is responsible for running the application
