@@ -22,38 +22,42 @@ import com.vaadin.flow.spring.annotation.SpringComponent;
 @SpringComponent
 public class ServiceInitListener implements VaadinServiceInitListener {
 
-	@Autowired
-	private I18NProvider i18nProvider;
+    @Autowired
+    private I18NProvider i18nProvider;
 
-	@Override
-	public void serviceInit(ServiceInitEvent serviceInitEvent) {
-		serviceInitEvent.getSource().addUIInitListener(uiInitEvent -> {
+    @Override
+    public void serviceInit(ServiceInitEvent serviceInitEvent) {
+        serviceInitEvent.getSource().addUIInitListener(uiInitEvent -> {
 
-			// Whenever a new user arrives, determine locale
-			initLanguage(uiInitEvent.getUI());
-		});
-	}
+            // Whenever a new user arrives, determine locale
+            initLanguage(uiInitEvent.getUI());
+        });
+    }
 
-	private void initLanguage(UI ui) {
+    private void initLanguage(UI ui) {
 
-		final Optional<Cookie> localeCookie = Arrays.stream(VaadinService.getCurrentRequest().getCookies())
-				.filter(cookie -> "locale".equals(cookie.getName())).findFirst();
+        Optional<Cookie> localeCookie = Optional.empty();
 
-		Locale locale;
+        Cookie[] cookies = VaadinService.getCurrentRequest().getCookies();
+        if (cookies != null) {
+            localeCookie = Arrays.stream(cookies).filter(cookie -> "locale".equals(cookie.getName())).findFirst();
+        }
 
-		if (localeCookie.isPresent() && !"".equals(localeCookie.get().getValue())) {
-			// Cookie found, use that
-			locale = Locale.forLanguageTag(localeCookie.get().getValue());
-		} else {
-			// Try to use Vaadin's browser locale detection
-			locale = VaadinService.getCurrentRequest().getLocale();
-		}
+        Locale locale;
 
-		// If the detection fails, default to the first language we support.
-		if (locale.getLanguage().equals("")) {
-			locale = i18nProvider.getProvidedLocales().get(0);
-		}
+        if (localeCookie.isPresent() && !"".equals(localeCookie.get().getValue())) {
+            // Cookie found, use that
+            locale = Locale.forLanguageTag(localeCookie.get().getValue());
+        } else {
+            // Try to use Vaadin's browser locale detection
+            locale = VaadinService.getCurrentRequest().getLocale();
+        }
 
-		ui.setLocale(locale);
-	}
+        // If the detection fails, default to the first language we support.
+        if (locale.getLanguage().equals("")) {
+            locale = i18nProvider.getProvidedLocales().get(0);
+        }
+
+        ui.setLocale(locale);
+    }
 }
