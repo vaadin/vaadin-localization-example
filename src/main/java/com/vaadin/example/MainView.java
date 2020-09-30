@@ -8,6 +8,7 @@ import javax.servlet.http.Cookie;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.vaadin.example.corner.VaadinCorner;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
@@ -117,6 +118,8 @@ public class MainView extends VerticalLayout implements LocaleChangeObserver {
         greetingButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         greetingButton.addClickShortcut(Key.ENTER);
         add(greetingButton);
+
+        add(new VaadinCorner());
     }
 
     /**
