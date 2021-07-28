@@ -1,4 +1,4 @@
-# Project example for implementing localization in a Vaadin 14 application
+# Project example for implementing localization in a Vaadin Flow application
 
 This example application demonstrates implementing internationalization and localization in a Vaadin Spring Boot project.
 Locales supported are English, Finnish and French.
