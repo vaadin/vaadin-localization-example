@@ -55,20 +55,18 @@ public class SimpleI18NProvider implements I18NProvider {
 
 	@Override
 	public String getTranslation(String key, Locale locale, Object... params) {
-
+		String lang = locale.getLanguage();
 		String rawstring = null;
 		try {
-			ResourceBundle bundle = localeMap.get(locale.getLanguage());
+			ResourceBundle bundle = localeMap.get(lang);
 			if (bundle == null) {
-				System.out.println(String.format("No translations found for locale {%s}, falling back to English", locale.getLanguage()));
-				bundle = localeMap.get(ENGLISH.getLanguage());
+				return String.format("%s:!{%s}", lang, key);
 			}
-			rawstring = bundle.getString(key);
-			return MessageFormat.format(rawstring, params);
+			return MessageFormat.format(bundle.getString(key), params);
 		} catch (final MissingResourceException e) {
 			// Translation not found, return error message instead of null as per API
-			System.out.println(String.format("No translation found for key {%s}", key));
-			return String.format("!{%s}", key);
+			System.out.println(String.format("No translation found for in lang: %s for key: {%s} ", lang, key));
+			return String.format("%s:!{%s}", lang, key);
 		} catch (final IllegalArgumentException e) {
 			e.printStackTrace(); // for devs to find where this happened
 			// Incorrect parameters

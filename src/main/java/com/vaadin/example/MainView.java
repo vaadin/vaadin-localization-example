@@ -102,7 +102,11 @@ public class MainView extends VerticalLayout implements LocaleChangeObserver {
         languageSelect.setItemLabelGenerator(l -> getTranslation(l.getLanguage()));
 
         languageSelect.setValue(UI.getCurrent().getLocale());
-        languageSelect.addValueChangeListener(event -> saveLocalePreference(event.getValue()));
+        languageSelect.addValueChangeListener(event -> {
+            if (event.isFromClient()) {
+                saveLocalePreference(event.getValue());
+            }
+        });
         add(languageSelect);
 
         add(helpSelectLang);
@@ -146,8 +150,19 @@ public class MainView extends VerticalLayout implements LocaleChangeObserver {
      * {@link ConfigureUIServiceInitListener}
      */
     private void saveLocalePreference(Locale locale) {
+        if (locale == null) {
+            return;
+        }
+        
         getUI().get().setLocale(locale);
         VaadinService.getCurrentResponse().addCookie(new Cookie("locale", locale.toLanguageTag()));
+        
+        // Refresh the language select items to update the labels with new translations
+        languageSelect.getDataProvider().refreshAll();
+        
+        // Re-select the current locale to ensure it's displayed correctly after refresh
+        languageSelect.setValue(locale);
+        
         Notification.show(getTranslation("view.help.localesaved"));
     }
 
