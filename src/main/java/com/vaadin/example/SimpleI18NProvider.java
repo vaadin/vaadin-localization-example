@@ -58,10 +58,13 @@ public class SimpleI18NProvider implements I18NProvider {
 
 		String rawstring = null;
 		try {
-			rawstring = localeMap.get(locale.getLanguage()).getString(key);
-
+			ResourceBundle bundle = localeMap.get(locale.getLanguage());
+			if (bundle == null) {
+				System.out.println(String.format("No translations found for locale {%s}, falling back to English", locale.getLanguage()));
+				bundle = localeMap.get(ENGLISH.getLanguage());
+			}
+			rawstring = bundle.getString(key);
 			return MessageFormat.format(rawstring, params);
-
 		} catch (final MissingResourceException e) {
 			// Translation not found, return error message instead of null as per API
 			System.out.println(String.format("No translation found for key {%s}", key));
